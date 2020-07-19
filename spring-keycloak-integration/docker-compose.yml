@@ -1,0 +1,23 @@
+version: '3.3'
+networks:
+  postgresnet:
+    external:
+      name: postgresnet
+services:
+   keycloak:
+      restart: always
+      image: quay.io/keycloak/keycloak:10.0.2
+      container_name: keycloak
+      environment:
+        DB_VENDOR: POSTGRES
+        DB_ADDR: postgres
+        DB_DATABASE: keycloakdb
+        DB_USER: keycloak
+        DB_SCHEMA: public
+        DB_PASSWORD: keycloak
+        KEYCLOAK_USER: admin
+        KEYCLOAK_PASSWORD: adminpassword
+      ports:
+        - 9080:8080
+      networks:
+        - postgresnet
