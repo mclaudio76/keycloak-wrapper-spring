@@ -5,11 +5,11 @@ import java.io.Serializable;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class Role  implements Serializable {
-	public String id ="";
-	public String name ="";
-	public String description = "";
+public class RoleEntity  implements Serializable {
+	public String  id ="";
+	public String  name ="";
+	public String  description = "";
 	public Boolean composite;
 	public Boolean clientRole;
-	public String containerId = "";
+	public String  containerId = "";
 }

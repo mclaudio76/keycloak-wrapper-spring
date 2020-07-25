@@ -9,7 +9,7 @@ import java.util.Map;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class Authorization implements Serializable {
+public class AuthorizationResponse implements Serializable {
 	
 private static final long serialVersionUID = 1L;
 	
