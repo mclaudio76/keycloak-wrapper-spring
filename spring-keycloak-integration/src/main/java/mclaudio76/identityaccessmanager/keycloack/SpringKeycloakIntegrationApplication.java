@@ -1,4 +1,4 @@
-package mclaudio76.keycloack;
+package mclaudio76.identityaccessmanager.keycloack;
 
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;

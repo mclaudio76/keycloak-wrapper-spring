@@ -1,4 +1,4 @@
-package mclaudio76.keycloack;
+package mclaudio76.identityaccessmanager.keycloack;
 
 public class ChangePasswordRequest {
 	public boolean temporary      = false;

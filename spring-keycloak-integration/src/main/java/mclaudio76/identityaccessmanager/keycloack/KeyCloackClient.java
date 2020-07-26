@@ -1,4 +1,4 @@
-package mclaudio76.keycloack;
+package mclaudio76.identityaccessmanager.keycloack;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -23,7 +23,7 @@ import mclaudio76.identityaccessmanager.AuthenticatedUser;
 import mclaudio76.identityaccessmanager.IdentityAuthenticationManagerClient;
 import mclaudio76.identityaccessmanager.IdentityAuthenticationException;
 import mclaudio76.identityaccessmanager.Role;
-import mclaudio76.keycloack.AuthorizationResponse.RoleList;
+import mclaudio76.identityaccessmanager.keycloack.AuthorizationResponse.RoleList;
 
 public class KeyCloackClient implements IdentityAuthenticationManagerClient {
 	

@@ -6,8 +6,8 @@ import java.util.List;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
-import mclaudio76.keycloack.AuthorizationResponse;
-import mclaudio76.keycloack.RealmUser;
+import mclaudio76.identityaccessmanager.keycloack.AuthorizationResponse;
+import mclaudio76.identityaccessmanager.keycloack.RealmUser;
 
 public class AuthenticatedUser implements UserDetails {
 

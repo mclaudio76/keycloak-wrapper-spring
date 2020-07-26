@@ -1,4 +1,4 @@
-package mclaudio76.keycloack;
+package mclaudio76.identityaccessmanager.keycloack;
 
 import java.io.Serializable;
 import java.util.ArrayList;
