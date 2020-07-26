@@ -24,6 +24,7 @@ public class AuthenticatedUser implements UserDetails {
 	private String scope;
 	private long   expires_in;
 	private long   refresh_expires_in;
+	private String tenantID;
 
 	
     public AuthenticatedUser setAuthorizationData(AuthorizationResponse auth) {
@@ -44,6 +45,7 @@ public class AuthenticatedUser implements UserDetails {
     	userInfo.enabled		  = user.enabled;
     	userInfo.emailVerified	  = user.emailVerified;
     	userInfo.realName		  = user.firstName;
+    	this.tenantID			  = user.realm;
     	return this;
     }
     
@@ -95,10 +97,9 @@ public class AuthenticatedUser implements UserDetails {
 		return refresh_token;
 	}
 
-	
+	public String getTenantID() {
+		return tenantID;
+	}
 
-	
-
-	
-	
+		
 }

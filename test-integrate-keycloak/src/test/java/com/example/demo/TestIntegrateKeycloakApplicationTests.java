@@ -1,11 +1,13 @@
-package mclaudio76.keycloack;
+package com.example.demo;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 
-//@SpringBootTest
-class SpringKeycloakIntegrationApplicationTests {
+@SpringBootTest
+class TestIntegrateKeycloakApplicationTests {
+
 	@Test
 	void contextLoads() {
 	}
+
 }

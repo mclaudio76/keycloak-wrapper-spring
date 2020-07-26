@@ -24,7 +24,7 @@ public class RealmUser implements Serializable {
 	public boolean emailVerified;
 	public String  firstName;
 	public long notBefore;
-	
+	public String  realm;
 	//disableableCredentialTypes ??
 	//requiredActions;
 	

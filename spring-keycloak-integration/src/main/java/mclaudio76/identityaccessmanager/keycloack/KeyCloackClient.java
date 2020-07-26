@@ -19,12 +19,14 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.JWTParser;
 
+import lombok.extern.java.Log;
 import mclaudio76.identityaccessmanager.AuthenticatedUser;
 import mclaudio76.identityaccessmanager.IdentityAuthenticationManagerClient;
 import mclaudio76.identityaccessmanager.IdentityAuthenticationException;
 import mclaudio76.identityaccessmanager.Role;
 import mclaudio76.identityaccessmanager.keycloack.AuthorizationResponse.RoleList;
 
+@Log(topic = "KeyCloakClientImpl")
 public class KeyCloackClient implements IdentityAuthenticationManagerClient {
 	
 	private RestTemplate restTemplate;
@@ -35,7 +37,7 @@ public class KeyCloackClient implements IdentityAuthenticationManagerClient {
 	private String adminMasterPassword		= "";
 	private String adminMaster				= "";
 	private final String REALM_ACCESS	    = "realm_access";
-	private String realm					= "";
+	
 	
 	
 	public KeyCloackClient(String server, String port, String adminUser, String adminPassword, String clientID, String clientSecret) {
@@ -49,34 +51,30 @@ public class KeyCloackClient implements IdentityAuthenticationManagerClient {
 		this.clientSecret		    = clientSecret;
 	}
 	
-	@Override
-	public IdentityAuthenticationManagerClient setRealm(String realm) {
-		this.realm = realm;
-		return this;
-	}
+	
 	
 	
 	@Override
-	public AuthenticatedUser login(String userID, String password) throws IdentityAuthenticationException {
-		AuthorizationResponse authentication = authenticateUser(clientID, realm, userID, password);
-		RealmUser realmUser					 = findUser(userID);
-		List<Role> roles					 = getUserRoles(userID);
+	public AuthenticatedUser login(String realm, String userID, String password) throws IdentityAuthenticationException {
+		AuthorizationResponse authentication = authenticateUser(realm,clientID,  userID, password);
+		RealmUser realmUser					 = findUser(realm, userID);
+		List<Role> roles					 = getUserRoles(realm, userID);
 		return new AuthenticatedUser().setUserData(realmUser).setAuthorizationData(authentication).setRoles(roles);
 	}
 	
 	@Override
-	public void addRoleToUser(String username, String role) throws IdentityAuthenticationException{
-		handleRolesForUser(username, role, HttpMethod.POST);
+	public void addRoleToUser(String realm, String username, String role) throws IdentityAuthenticationException{
+		handleRolesForUser(realm, username, role, HttpMethod.POST);
 	}
 	
 	@Override
-	public void removeRoleFromUser(String username, String role) throws IdentityAuthenticationException {
-		handleRolesForUser(username, role, HttpMethod.DELETE);
+	public void removeRoleFromUser(String realm, String username, String role) throws IdentityAuthenticationException {
+		handleRolesForUser(realm, username, role, HttpMethod.DELETE);
 	}
 	
 	@Override
-	public boolean changeUserPassword(String username, String newPassword) throws IdentityAuthenticationException {
-		RealmUser user = findUser(username);
+	public boolean changeUserPassword(String realm, String username, String newPassword) throws IdentityAuthenticationException {
+		RealmUser user = findUser(realm, username);
 		AuthorizationResponse adminAuth = authenticateKeyCloackAdminUser(adminMaster, adminMasterPassword);
 		String authToken		= adminAuth.getAccessToken();
 		HttpHeaders headers = new HttpHeaders();
@@ -92,13 +90,13 @@ public class KeyCloackClient implements IdentityAuthenticationManagerClient {
 			return response.getStatusCode().is2xxSuccessful();
 		}
 		catch(Exception e) {
-			e.printStackTrace();
+			log.severe("[changeUserPassword]"+e.getMessage());
 			return false;
 		}
 	}
 	
 	
-	private AuthorizationResponse authenticateUser(String clientID, String realm, String userID, String password) throws IdentityAuthenticationException {
+	private AuthorizationResponse authenticateUser(String realm, String clientID, String userID, String password) throws IdentityAuthenticationException {
 		HttpHeaders headers = new HttpHeaders();
 		headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
 		MultiValueMap<String, String> map = new LinkedMultiValueMap<>();
@@ -130,18 +128,22 @@ public class KeyCloackClient implements IdentityAuthenticationManagerClient {
 			return auth;
 		}
 		catch(RestClientException e) {
-			throw new IdentityAuthenticationException("User ["+userID+"] can't be authenticated.");
+			String message = "User ["+userID+"] can't be authenticated : "+e.getMessage();
+			log.severe("[authenticateUser]"+message);
+			throw new IdentityAuthenticationException(message);
 		}
 		catch(Exception e) {
-			throw new IdentityAuthenticationException("[INTERNAL-ERROR]"+ e.getMessage());
+			String message = "INTERNAL-ERROR ["+userID+"] can't be authenticated : "+e.getMessage();
+			log.severe("[authenticateUser]"+message);
+			throw new IdentityAuthenticationException(message);
 		}
 	}
 
 	private AuthorizationResponse authenticateKeyCloackAdminUser(String userID, String password) throws IdentityAuthenticationException {
-		return authenticateUser("admin-cli", "master", userID, password);
+		return authenticateUser("master","admin-cli",  userID, password);
 	}
 	
-	private RealmUser[] listUsersForRealm() throws IdentityAuthenticationException {
+	private RealmUser[] listUsersForRealm(String realm) throws IdentityAuthenticationException {
 		AuthorizationResponse adminAuth = authenticateKeyCloackAdminUser(adminMaster, adminMasterPassword);
 		String authToken		= adminAuth.getAccessToken();
 		HttpHeaders headers = new HttpHeaders();
@@ -158,29 +160,31 @@ public class KeyCloackClient implements IdentityAuthenticationManagerClient {
 			return users;
 		}
 		catch(HttpClientErrorException e) {
-			e.printStackTrace();
-			return null;
+			String message = "Can't list users of realm ["+realm+"] "+e.getMessage();
+			log.severe("[listUsersForRealm]"+message);
+			throw new IdentityAuthenticationException(message);
 		}
 	}
 	
 	
-	private RealmUser findUser(String username) throws IdentityAuthenticationException {
-		RealmUser[] users = listUsersForRealm();
+	private RealmUser findUser(String realm, String username) throws IdentityAuthenticationException {
+		RealmUser[] users = listUsersForRealm(realm);
 		if(users != null) {
 			for(RealmUser user : users) {
 				if(user.username.trim().equalsIgnoreCase(username)) {
+					user.realm = realm;
 					return user;
 				}
 			}
 		}
-		return null;
+		String message = "User ["+username+"] not found in realm ["+realm+"]";
+		log.severe("[findUser]"+message);
+		throw new IdentityAuthenticationException(message);
 	}
 	
 	
-	
-	
-	private List<Role> getUserRoles(String username)  throws IdentityAuthenticationException {
-		RealmUser user = findUser(username);
+	private List<Role> getUserRoles(String realm, String username)  throws IdentityAuthenticationException {
+		RealmUser user = findUser(realm, username);
 		AuthorizationResponse adminAuth = authenticateKeyCloackAdminUser(adminMaster, adminMasterPassword);
 		String authToken		= adminAuth.getAccessToken();
 		HttpHeaders headers = new HttpHeaders();
@@ -200,16 +204,17 @@ public class KeyCloackClient implements IdentityAuthenticationManagerClient {
 			return assignedRoles;
 		}
 		catch(Exception e) {
-			e.printStackTrace();
-			return null;
+			String message = "Unable to read roles assigned to user  ["+username+"]";
+			log.severe("[getUserRoles]"+message);
+			throw new IdentityAuthenticationException(message);
 		}
 	}
 	
 	
 	
 	
-	private RoleEntity[] getAvailableRoles(String username) throws IdentityAuthenticationException {
-		RealmUser user = findUser(username);
+	private RoleEntity[] getAvailableRoles(String realm, String username) throws IdentityAuthenticationException {
+		RealmUser user = findUser(realm, username);
 		AuthorizationResponse adminAuth = authenticateKeyCloackAdminUser(adminMaster, adminMasterPassword);
 		String authToken		= adminAuth.getAccessToken();
 		HttpHeaders headers = new HttpHeaders();
@@ -223,9 +228,9 @@ public class KeyCloackClient implements IdentityAuthenticationManagerClient {
 	
 	
 	
-	private void handleRolesForUser(String username, String role, HttpMethod verb) throws IdentityAuthenticationException {
-		RealmUser user 			= findUser(username);
-		RoleEntity[] assignableRoles 	= getAvailableRoles(username);
+	private void handleRolesForUser(String realm, String username, String role, HttpMethod verb) throws IdentityAuthenticationException {
+		RealmUser user 					= findUser(realm, username);
+		RoleEntity[] assignableRoles 	= getAvailableRoles(realm, username);
 		RoleEntity   requestRole		= null;
 		for(RoleEntity x : assignableRoles) {
 			if(x.name.trim().equalsIgnoreCase(role)) {
@@ -247,14 +252,17 @@ public class KeyCloackClient implements IdentityAuthenticationManagerClient {
 																	verb,
 																	entity,
 																	String.class);
-				
 			}
 			catch(Exception e) {
-				e.printStackTrace();
+				String message = "Unable to handle role ["+role+"] with user  ["+username+"]";
+				log.severe("[handleRolesForUser]"+message);
+				throw new IdentityAuthenticationException(message);
 			}
 		}
 		else {
-			throw new IdentityAuthenticationException("Role ["+role+"] can't be assigned to ["+username+"]");
+			String message = "Unable to handle role ["+role+"] with user  ["+username+"] : role not found";
+			log.severe("[handleRolesForUser]"+message);
+			throw new IdentityAuthenticationException(message);
 		}
 	}
 	
