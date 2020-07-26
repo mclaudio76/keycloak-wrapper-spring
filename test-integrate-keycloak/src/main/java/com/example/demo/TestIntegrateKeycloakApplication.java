@@ -34,8 +34,8 @@ public class TestIntegrateKeycloakApplication {
 					//client.authenticateUser("spring-realm", "utente", "utente");
 					///RealmUser[] users = client.listUsersForRealm();
 					//client.changePassword("spring-realm", "mimmo", "beltest");
-					UserDetails user = client.login("spring-realm", "mimmo", "claudio");
-					client.changeUserPassword("spring-realm", "mimmo", "beltest");
+					UserDetails user = client.login("spring-realm", "mimmo", "beltest");
+					client.logout("spring-realm", "mimmo");
 					//client.listRolesForUser("spring-realm", "mimmo");
 					//client.assignableRoles("spring-realm", "mimmo");
 					//client.removeRoleFromUser("spring-realm","mimmo", "ROLE_AUDITOR");

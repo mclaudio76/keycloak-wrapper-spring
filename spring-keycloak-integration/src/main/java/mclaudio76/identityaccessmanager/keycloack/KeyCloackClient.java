@@ -63,6 +63,31 @@ public class KeyCloackClient implements IdentityAuthenticationManagerClient {
 	}
 	
 	@Override
+	public void logout(String realm, String username) throws IdentityAuthenticationException {
+		RealmUser user = findUser(realm, username);
+		AuthorizationResponse adminAuth = authenticateKeyCloackAdminUser(adminMaster, adminMasterPassword);
+		String authToken		= adminAuth.getAccessToken();
+		HttpHeaders headers = new HttpHeaders();
+		headers.add("Authorization", "Bearer "+authToken);
+		headers.setContentType(MediaType.APPLICATION_JSON);
+		HttpEntity<String> entity = new HttpEntity<String>("", headers);
+		String url = "http://"+server+":"+port+"/auth/admin/realms/"+realm+"/users/"+user.id+"/logout";
+		try {
+			ResponseEntity<String> response =   restTemplate.exchange(url, 
+																HttpMethod.POST,
+																entity,
+																String.class);
+			
+		}
+		catch(Exception e) {
+			log.severe("[logout]"+e.getMessage());
+			
+		}
+	}
+	
+
+	
+	@Override
 	public void addRoleToUser(String realm, String username, String role) throws IdentityAuthenticationException{
 		handleRolesForUser(realm, username, role, HttpMethod.POST);
 	}
@@ -265,7 +290,8 @@ public class KeyCloackClient implements IdentityAuthenticationManagerClient {
 			throw new IdentityAuthenticationException(message);
 		}
 	}
-	
+
+
 	
 
 	
